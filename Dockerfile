@@ -14,5 +14,4 @@ RUN chmod +x /code/*.sh && \
 
 WORKDIR /acl
 VOLUME /acl
-
 CMD [ "/code/cron.sh" ]
