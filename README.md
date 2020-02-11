@@ -23,7 +23,7 @@ services:
     container_name: whitelist
     image: maikelmertens/aws-securitygroup-acl:latest
     environment:
-      - SECURITY_GROUP_ID=sg-abc123def
+      - SECURITY_GROUP_IDS="sg-abc123def sg-ghi456jkl"
 ```
 
 For more information on what parameters / environment variables you can use, please refer to chapter [Parameters](#Parameters).
@@ -89,11 +89,11 @@ You might want to run this with temporary credentials fetched via `aws sts assum
 
 The following parameters can be provided to the Docker container as environment variables:
 
-- **SECURITY_GROUP_ID**
+- **SECURITY_GROUP_IDS**
 
   _Required_
 
-  The source _AWS Security Group_ identifier (starts with `sg-`) to use for this particular whitelist.
+  The source _AWS Security Groups_ identifier (starts with `sg-`) to use for this particular whitelist.
   Must be provided at runtime, otherwise the script will exit.
 
 - **CRON**
@@ -112,9 +112,16 @@ The following parameters can be provided to the Docker container as environment 
 
 - **OUTPUT_FILE**
 
-  _Default: whitelist.acl_
+  _Default: **sg_name**_
 
-  Specifies the filename to store the output. It will be placed within the `/acl` directory, and is exposed to other Docker containers by having the `volume` directive set.
+  Options can be: _**sg_name**, **stdout**, [file name]_
+  Specifies the filename to store the output. **sg_name** is a placeholder to use the Security Group ID as filename, while **stdout** will redirect the entire output to stdout. If you choose a custom filename, it will be placed within the **OUTPUT_DIR** directory.
+
+- **OUTPUT_DIR**
+
+  _Default: /acl_
+
+  Specifies the directory to store the output. Defaults to the `/acl` directory, and is exposed to other Docker containers by having the `volume` directive set and should not be changed.
 
 - **BLACKLIST**
 
