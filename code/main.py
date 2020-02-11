@@ -10,8 +10,8 @@ def error_log(line, exit = False):
     print(line, file = sys.stderr)
     if exit: sys.exit(1)
 
-def execute(params):
-    ip_ranges = sorted(find_ip_ranges(params.security_group_id), key = lambda ip_range: ip_range['CidrIp'])
+def execute(security_group_id, params):
+    ip_ranges = sorted(find_ip_ranges(security_group_id), key = lambda ip_range: ip_range['CidrIp'])
     if params.format == 'nginx': format_nginx(ip_ranges, params.blacklist)
     if params.format == 'plain': format_plain(ip_ranges)
 
@@ -43,14 +43,19 @@ def format_nginx(ip_ranges, blacklist):
 
 if __name__== "__main__":
     parser = argparse.ArgumentParser(description = 'Obtains AWS Security Group IP addresses recursively and outputs them', add_help = True)
-    parser.add_argument('-i', '--id', dest = 'security_group_id', help = 'The AWS Security Group used to obtain IP addresses from', required = True)
+    parser.add_argument('-i', '--id', nargs = '+', dest = 'security_group_ids', help = 'The AWS Security Group used to obtain IP addresses from', required = True)
     parser.add_argument('-b', '--blacklist', dest = 'blacklist', action='store_true', help = 'Will generate and outputs a blacklist (default: generate a whitelist)', default = False)
     parser.add_argument('-f', '--format', dest = 'format', help = 'The formatting mode to output', choices=['plain', 'nginx'], default = 'plain')
-    parser.add_argument('-o', '--output', dest = 'output', help = 'File path to direct the contents of the output to (default: stdout)', default = 'stdout')
+    parser.add_argument('-of', '--output-file', dest = 'output_file', help = 'File path to direct the contents of the output to (default: sg_id)', default = 'sg_id')
+    parser.add_argument('-od', '--output-dir', dest = 'output_dir', help = 'File path to direct the contents of the output to (default: ".")', default = '.')
     params = parser.parse_args()
 
-    if not params.security_group_id.startswith('sg-'): error_log("Security Group ID should start with 'sg-'. Exiting...", exit = True)
-    if not params.output == 'stdout': sys.stdout = open(params.output, 'wt')
-
-    execute(params)
+    for security_group_id in params.security_group_ids:
+        if not security_group_id.startswith('sg-'):
+            error_log("Security Group ID should start with 'sg-' but is '{}'. Exiting...".format(security_group_id), exit = True)
+        if not params.output_file == 'stdout':
+            outfile = params.output_file
+            if params.output_file == 'sg_id': outfile = security_group_id
+            sys.stdout = open("{}/{}.acl".format(params.output_dir, outfile), 'wt')
+        execute(security_group_id, params)
 
